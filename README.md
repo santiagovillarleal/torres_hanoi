@@ -6,6 +6,8 @@ gcc -Wall torres_hanoi.c -o torres_hanoi
 
 Exemplo de uso:
 
+./torres_hanoi 4
+
 valores validos:
 A-B: mover de torre A a torre B, sendo A,B={1,2,3}. Exemplos: 1-2, 3-1,...
 
@@ -173,4 +175,3 @@ torre3: baleira.
 Acabache.
 
 fora
-
