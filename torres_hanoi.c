@@ -18,6 +18,8 @@
 #define TORRE_2 "torre 2"
 #define TORRE_3 "torre 3"
 
+unsigned int *torre1, *torre2, *torre3;
+
 void imprimir_uso(char *prog)
 {
   printf("%s <N> [-b|-i]\n", prog);
@@ -44,7 +46,7 @@ void zeros(unsigned int *torre, unsigned int tam)
   }
 }
 
-void inicializar(unsigned int *torre1, unsigned int *torre2, unsigned int *torre3, unsigned int tam)
+void inicializar(unsigned int tam)
 {
   for (unsigned int i = 0;i<tam;i++)
   {
@@ -134,7 +136,7 @@ void axuda()
   printf("fora: acaba o xogo.\n\n");
 }
 
-void ler_torres(unsigned int *torre1, unsigned int *torre2, unsigned int *torre3, unsigned int tam)
+void ler_torres(unsigned int tam)
 {
   printf("Estado actual: \n");
   ler_torre(TORRE_1, torre1, tam);
@@ -147,83 +149,72 @@ unsigned char torre_valida(char t)
   return ((t=='1')||(t=='2')||(t=='3'));
 }
 
-void xogar(unsigned int *torre1,
-           unsigned int *torre2,
-           unsigned int *torre3,
-           unsigned int n)
+void ler_opcion(unsigned int **p_torreA, unsigned int **p_torreB)
 {
   char opc[TAM_MAX_OPC];
+  scanf("%s", opc);
+  if (!strcmp(opc, "fora")) exit(OK);;
+  //A-B, onde A={1,2,3} e B={1,2,3}
+  if ((strlen(opc)==3) && (opc[1]='-') &&
+      torre_valida(opc[0]) && torre_valida(opc[2]))
+  {
+    if (opc[0]==opc[2])
+    {
+      printf("A torre destino non pode ser a mesma que a torre orixe, escolla outra.\n");
+      return;
+    }
+    switch (opc[0])
+    {
+      case '1': *p_torreA=torre1;
+                break;
+      case '2': *p_torreA=torre2;
+                break;
+      case '3': *p_torreA=torre3;
+                break;
+      default:  break;
+    }
+    switch (opc[2])
+    {
+      case '1': *p_torreB=torre1;
+                break;
+      case '2': *p_torreB=torre2;
+                break;
+      case '3': *p_torreB=torre3;
+                break;
+      default:  break;
+    }
+  }
+}
+
+void bucle_xogo_online(unsigned int n)
+{
   unsigned int *torreA, *torreB;
   int res_mover=0;
 
   while (TRUE)
   {
     torreA=torreB=NULL;
-    scanf("%s", opc);
-    if (!strcmp(opc, "fora")) break;
 
-    //A-B, onde A={1,2,3} e B={1,2,3}
-    if ((strlen(opc)==3) && (opc[1]='-') &&
-        torre_valida(opc[0]) && torre_valida(opc[2]))
-    {
-      switch (opc[0])
-      {
-        case '1': torreA=torre1;
-                  break;
-        case '2': torreA=torre2;
-                  break;
-        case '3': torreA=torre3;
-                  break;
-        default:  break;
-      }
-      switch (opc[2])
-      {
-        case '1': torreB=torre1;
-                  break;
-        case '2': torreB=torre2;
-                  break;
-        case '3': torreB=torre3;
-                  break;
-        default:  break;
-      }
-    }
+    ler_opcion(&torreA, &torreB);
     if ((!torreA)||(!torreB))
     {
       axuda();
-      ler_torres(torre1, torre2, torre3, n);
+      ler_torres(n);
       continue;
     }
+
     if ((res_mover = mover(torreA, torreB, n))<0)
     {
       if (res_mover == ERR_METER_ELEM_GRANDE) printf("O estado actual das torres non permite ese movemento.\n");
       else printf("Fallo ó mover: %d\n", res_mover);
     }
-    ler_torres(torre1, torre2, torre3, n);
+    ler_torres(n);
 
     if (torre_chea(torre2, n))
     {
       printf("Acabache.\n");
     }
   }
-}
-
-void xogo_online(unsigned int n)
-{
-  unsigned int *torre1, *torre2, *torre3;
-
-  torre1=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-  torre2=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-  torre3=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-
-  inicializar(torre1, torre2, torre3, n);
-  axuda();
-  ler_torres(torre1, torre2, torre3, n);
-
-  xogar(torre1, torre2, torre3, n);
-
-  free(torre1);
-  free(torre2);
-  free(torre3);
 }
 
 void mover_elem_offline(unsigned int n,
@@ -258,9 +249,28 @@ void hanoi_rec(unsigned int n,
   hanoi_rec(n-1, nome_torre_aux, nome_torre_dest, nome_torre_orix);
 }
 
-void xogo_offline(unsigned int n)
+void xogar(unsigned int n, unsigned char online)
 {
-  hanoi_rec(n, TORRE_1, TORRE_2, TORRE_3);
+  if (online)
+  {
+    torre1=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+    torre2=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+    torre3=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+
+    inicializar(n);
+    axuda();
+    ler_torres(n);
+
+    bucle_xogo_online(n);
+
+    free(torre1);
+    free(torre2);
+    free(torre3);
+  }
+  else
+  {
+    hanoi_rec(n, TORRE_1, TORRE_2, TORRE_3);
+  }
 }
 
 int main(int argc, char *argv[])
@@ -281,8 +291,6 @@ int main(int argc, char *argv[])
   }
 
   n = atoi(argv[1]);
-  if (online) xogo_online(n);
-  else xogo_offline(n);
+  xogar(n, online);
 
 }
-
