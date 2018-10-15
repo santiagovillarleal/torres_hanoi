@@ -309,6 +309,4 @@ int main(int argc, char *argv[])
 
   n = atoi(argv[1]);
   xogar(n, online);
-
-  printf("n: %u\n",n);
 }
