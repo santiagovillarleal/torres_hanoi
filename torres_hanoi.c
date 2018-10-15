@@ -239,9 +239,9 @@ void hanoi_rec(unsigned int n,
   else
   {
     hanoi_rec(n-1, nome_torre_orix, nome_torre_aux, nome_torre_dest, tam);
+    mover_elem_offline(nome_torre_orix, nome_torre_dest, tam);
+    hanoi_rec(n-1, nome_torre_aux, nome_torre_dest, nome_torre_orix, tam);
   }
-  mover_elem_offline(nome_torre_orix, nome_torre_dest, tam);
-  hanoi_rec(n-1, nome_torre_aux, nome_torre_dest, nome_torre_orix, tam);
 }
 
 void bucle_xogo_online(unsigned int n)
