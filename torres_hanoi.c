@@ -12,7 +12,7 @@
 
 #define TRUE                    1
 #define FALSE                   0
-#define TAM_MAX_OPC            50
+#define TAM_MAX_MOV            50
 
 #define TORRE_1 "torre 1"
 #define TORRE_2 "torre 2"
@@ -149,11 +149,8 @@ unsigned char torre_valida(char t)
   return ((t=='1')||(t=='2')||(t=='3'));
 }
 
-void ler_opcion(unsigned int **p_torreA, unsigned int **p_torreB)
+void ler_mov(char *opc, unsigned int **p_torreA, unsigned int **p_torreB)
 {
-  char opc[TAM_MAX_OPC];
-  scanf("%s", opc);
-  if (!strcmp(opc, "fora")) exit(OK);;
   //A-B, onde A={1,2,3} e B={1,2,3}
   if ((strlen(opc)==3) && (opc[1]='-') &&
       torre_valida(opc[0]) && torre_valida(opc[2]))
@@ -186,91 +183,110 @@ void ler_opcion(unsigned int **p_torreA, unsigned int **p_torreB)
   }
 }
 
+void aplicar_mov(unsigned int *torreA, unsigned int *torreB, unsigned int n)
+{
+  int res_mover=0;
+
+  if ((res_mover = mover(torreA, torreB, n))<0)
+  {
+    if (res_mover == ERR_METER_ELEM_GRANDE) printf("O estado actual das torres non permite ese movemento.\n");
+    else printf("Fallo ó mover: %d\n", res_mover);
+  }
+  ler_torres(n);
+
+  if (torre_chea(torre2, n))
+  {
+    printf("Acabache.\n");
+  }
+}
+
+void mover_elem_offline(char *torre_orix, char *torre_dest, unsigned int n)
+{
+  char mov[TAM_MAX_MOV];
+  unsigned int *torreA, *torreB;
+  unsigned int torre_orix_int = nome_torre_to_int(torre_orix);
+  unsigned int torre_dest_int = nome_torre_to_int(torre_dest);
+
+  torreA=torreB=NULL;
+  if ((!torre_orix_int)||(!torre_dest_int))
+  {
+    printf("Error mover_elem(..): torre non válida.\n");
+    exit(ERR_MOVER_ELEM_OFFLINE);
+  }
+  sprintf(mov, "%u-%u", torre_orix_int, torre_dest_int);
+  printf("mov: %s\n", mov);
+  ler_mov(mov, &torreA, &torreB);
+  if ((!torreA)||(!torreB))
+  {
+    printf("hanoi_rec(..): error mov.\n");
+    exit(ERR_MOVER_ELEM_OFFLINE);
+  }
+  aplicar_mov(torreA, torreB, n);
+}
+
+void hanoi_rec(unsigned int n,
+               char *nome_torre_orix,
+               char *nome_torre_dest,
+               char *nome_torre_aux,
+               unsigned int tam)
+{
+  if (n==1)
+  {
+    mover_elem_offline(nome_torre_orix, nome_torre_dest, tam);
+    return;
+  }
+  else
+  {
+    hanoi_rec(n-1, nome_torre_orix, nome_torre_aux, nome_torre_dest, tam);
+  }
+  mover_elem_offline(nome_torre_orix, nome_torre_dest, tam);
+  hanoi_rec(n-1, nome_torre_aux, nome_torre_dest, nome_torre_orix, tam);
+}
+
 void bucle_xogo_online(unsigned int n)
 {
+  char mov[TAM_MAX_MOV];
   unsigned int *torreA, *torreB;
-  int res_mover=0;
 
   while (TRUE)
   {
     torreA=torreB=NULL;
+    scanf("%s", mov);
+    if (!strcmp(mov, "fora")) exit(OK);;
 
-    ler_opcion(&torreA, &torreB);
+    ler_mov(mov, &torreA, &torreB);
     if ((!torreA)||(!torreB))
     {
       axuda();
       ler_torres(n);
       continue;
     }
-
-    if ((res_mover = mover(torreA, torreB, n))<0)
-    {
-      if (res_mover == ERR_METER_ELEM_GRANDE) printf("O estado actual das torres non permite ese movemento.\n");
-      else printf("Fallo ó mover: %d\n", res_mover);
-    }
-    ler_torres(n);
-
-    if (torre_chea(torre2, n))
-    {
-      printf("Acabache.\n");
-    }
+    aplicar_mov(torreA, torreB, n);
   }
-}
-
-void mover_elem_offline(unsigned int n,
-                char *torre_orix,
-                char *torre_dest)
-{
-  unsigned int torre_orix_int = nome_torre_to_int(torre_orix);
-  unsigned int torre_dest_int = nome_torre_to_int(torre_dest);
-  if ((!torre_orix_int)||(!torre_dest_int))
-  {
-    printf("Error mover_elem(..): torre non válida.\n");
-    exit(ERR_MOVER_ELEM_OFFLINE);
-  }
-  printf("%u-%u\n", torre_orix_int, torre_dest_int);
-}
-
-void hanoi_rec(unsigned int n,
-               char *nome_torre_orix,
-               char *nome_torre_dest,
-               char *nome_torre_aux)
-{
-  if (n==1)
-  {
-    mover_elem_offline(n, nome_torre_orix, nome_torre_dest);
-    return;
-  }
-  else
-  {
-    hanoi_rec(n-1, nome_torre_orix, nome_torre_aux, nome_torre_dest);
-  }
-  mover_elem_offline(n, nome_torre_orix, nome_torre_dest);
-  hanoi_rec(n-1, nome_torre_aux, nome_torre_dest, nome_torre_orix);
 }
 
 void xogar(unsigned int n, unsigned char online)
 {
+  torre1=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+  torre2=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+  torre3=(unsigned int *)malloc(sizeof(unsigned int )*(n));
+
+  inicializar(n);
+  axuda();
+  ler_torres(n);
+
   if (online)
   {
-    torre1=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-    torre2=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-    torre3=(unsigned int *)malloc(sizeof(unsigned int )*(n));
-
-    inicializar(n);
-    axuda();
-    ler_torres(n);
-
     bucle_xogo_online(n);
-
-    free(torre1);
-    free(torre2);
-    free(torre3);
   }
   else
   {
-    hanoi_rec(n, TORRE_1, TORRE_2, TORRE_3);
+    hanoi_rec(n, TORRE_1, TORRE_2, TORRE_3, n);
   }
+
+  free(torre1);
+  free(torre2);
+  free(torre3);
 }
 
 int main(int argc, char *argv[])
