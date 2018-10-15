@@ -72,7 +72,7 @@ int sacar(unsigned int *torre, unsigned int tam)
   unsigned int i = 0;
   if (torre_baleira(torre)) return ERR_SACAR_TOR_BALEIRA;
   elemento=torre[0];
-  for (i=1;(i<tam)||(torre[i]);i++)
+  for (i=1;i<tam;i++)
   {
     torre[i-1]=torre[i];
   }
@@ -123,7 +123,8 @@ void ler_torre(char *nome_torre, unsigned int *torre, unsigned int tam)
 
   for (unsigned int i = 0;i<tam;i++)
   {
-    printf("%u ", torre[i]);
+    if (tam<10) printf("%u ", torre[i]);
+    else printf("%2u ", torre[i]);
   }
   printf("\n");
 }
@@ -309,4 +310,5 @@ int main(int argc, char *argv[])
   n = atoi(argv[1]);
   xogar(n, online);
 
+  printf("n: %u\n",n);
 }
